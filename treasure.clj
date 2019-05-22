@@ -4,4 +4,8 @@
               (conj arg1 arg2)) 
             [] (line-seq rdr))))
 
-(println (map #(str/split % "") (read-file)))
+(defn split-strings 
+  [strlist]
+  (map #(clojure.string/split % #",") strlist))
+
+(println (split-strings (read-file)))
