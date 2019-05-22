@@ -4,8 +4,16 @@
               (conj arg1 arg2)) 
             [] (line-seq rdr))))
 
+(defn row-count 
+  [strlist]
+  (count strlist))
+
+(defn col-count
+  [strlist]
+  (count (first strlist)))
+
 (defn split-strings 
   [strlist]
-  (map #(clojure.string/split % #",") strlist))
+  (map #(clojure.string/split % #"") strlist))
 
-(println (split-strings (read-file)))
+(println (col-count (split-strings (read-file))))
