@@ -1,5 +1,5 @@
 (defn read-file []
-  (with-open [rdr (clojure.java.io/reader "test.txt")]
+  (with-open [rdr (clojure.java.io/reader "map.txt")]
     (reduce (fn [arg1 arg2]
               (conj arg1 arg2))
             [] (line-seq rdr))))
@@ -7,6 +7,14 @@
 (defn split-strings
   [strlist]
   (vec (map #(clojure.string/split % #"") strlist)))
+
+(defn is-maze-valid
+  [arg]
+  (let [row-count (count (first arg))]
+    (reduce
+     (fn [is-valid maze]
+       (and is-valid (= row-count (count maze))))
+     true arg)))
 
 (defn get-xy [x y strlist] (nth (nth strlist y) x))
 
@@ -47,7 +55,7 @@
                           (assoc maze :found true)
                           (do
                             (if (is-safe-move (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)) (get maze :map))
-                              (let [result-maze (find-path rows cols (mark-visited x y "!" maze) visited (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)))]                                
+                              (let [result-maze (find-path rows cols (mark-visited x y "!" maze) visited (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)))]
                                 (if (get result-maze :found)
                                   (mark-visited x y "+" result-maze)
                                   result-maze))
@@ -63,12 +71,15 @@
 (def rows (count treasure-map))
 (def cols (count (first treasure-map)))
 
-(do
-  (println "This is my challenge:\n")
-  (pretty-print treasure-map)
-  (println "\n\n")
-  (let [solved-maze (find-path rows cols {:map treasure-map :found false} #{} 0 0)]
-    (if (:found solved-maze)
-      (println "Woo hoo, I found the treasure :-)\n")
-      (println "Uh oh, I could not find the treasure :-(\n"))
-    (pretty-print (:map solved-maze))))
+(if (is-maze-valid treasure-map)
+  (do
+    (println "This is my challenge:\n")
+    (pretty-print treasure-map)
+    (println "\n\n")
+    (let [solved-maze (find-path rows cols {:map treasure-map :found false} #{} 0 0)]
+      (if (:found solved-maze)
+        (println "Woo hoo, I found the treasure :-)\n")
+        (println "Uh oh, I could not find the treasure :-(\n"))
+      (pretty-print (:map solved-maze))))
+  (println "Invalid Input :( Please make sure every row in the input file has the same number of columns.")
+  )
