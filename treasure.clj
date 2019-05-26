@@ -20,14 +20,81 @@
       false)
     false))
 
-(defn mark-visited 
+(defn mark-visited
   [x y value strlist]
-  (if (= (get-xy x y strlist) "@")
-    strlist
-    (assoc strlist y (assoc (nth strlist y) x value)))
-  )
+  (if (= (get-xy x y (get strlist :map)) "@")
+    (assoc strlist :found true)
+    (assoc strlist :map
+           (assoc (get strlist :map) y (assoc (nth (get strlist :map) y) x value)))))
 
-()
+(defn map-move-to-num
+  [key move]
+  (get (get {:x {:left -1 :right 1} :y {:up -1 :down 1}} key {}) move 0))
+
+(defn pretty-print
+  [strlist]
+  (println (str "Found: " (get strlist :found)))
+  (doseq [i (get strlist :map)]
+    (println i)))
+
+(defn find-path
+  [rows cols strlist visited x y]
+
+  (if (= (get-xy x y (get strlist :map)) "@")
+    (pretty-print (get strlist :map)))
+  (println (str "## at => " (get-xy x y (get strlist :map)) "; x -> " x "; y -> " y))
+  (pretty-print strlist)
+
+  (def maze (reduce (fn [maze move]
+                      (println (str "Currently at => " (get-xy x y (get maze :map)) "; x -> " x "; y -> " y))
+                      (if (get maze :found)
+                        (do 
+                          (mark-visited x y "+" maze)
+                          )
+                        (if (= (get-xy x y (get maze :map)) "@")
+                          (assoc maze :found true)
+                          (do
+                            (if (is-safe-move (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)) (get maze :map))
+                              (let [result-maze (find-path rows cols (mark-visited x y "!" maze) visited (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)))]
+                                (if (get result-maze :found)
+                                  (println "We are here !!!!"))
+                                (if (get result-maze :found)
+                                  (mark-visited x y "+" result-maze)
+                                  result-maze
+                                  ))
+                              (if (get maze :found)
+                                (mark-visited x y "+" maze)
+                                (mark-visited x y "!" maze)))
+                            )))
+                      )
+                    strlist [:up :down :left :right]))
+  (println "\nReturned maze")
+  (pretty-print maze)
+  (println "Returned maze\n")
+  maze)
+
+(def moves {:x {:left -1 :right 1} :y {:up -1 :down 1}})
+(def original-treasure-map (split-strings (read-file)))
+(def treasure-map (split-strings (read-file)))
+(def rows (count treasure-map))
+(def cols (count (first treasure-map)))
+
+(println rows)
+(println cols)
+(find-path rows cols {:map treasure-map :found false} #{} 0 0)
+
+; (defn recursive-backtracker
+;   [current-x current-y grid]
+;   (reduce (fn [grid direction]
+;             (let [next-x (+ current-x (DX direction))
+;                   next-y (+ current-y (DY direction))]
+;               (if (valid-unvisited-cell? next-x next-y grid)
+;                 (recursive-backtracker next-x next-y
+;                                        (remove-walls current-x current-y next-x next-y
+;                                                      direction grid))
+;                 grid)))
+;           grid, (clojure.core/shuffle [:N :S :E :W])))
+
 
 ; (defn find-path
 ;   [rows cols strlist visited x y]
@@ -41,56 +108,3 @@
 ;     )
 ;   (println (str "Currently at => " (get-xy x y strlist) "; x -> " x "; y -> " y))
 ;   )
-
-(defn map-move-to-num
-  [key move]
-  (get (get {:x {:left -1 :right 1} :y {:up -1 :down 1}} key {}) move 0)
-  )
-
-(defn pretty-print
-  [strlist]
-  (doseq [i strlist]
-    (println i)))
-
-(defn find-path
-  [rows cols strlist visited x y]
-  
-  (if (= (get-xy x y strlist) "@")
-    (pretty-print strlist))
-  (println (str "## at => " (get-xy x y strlist) "; x -> " x "; y -> " y))
-  (pretty-print strlist)
-
-  (def maze (reduce (fn [maze move]
-                      (println (str "Currently at => " (get-xy x y strlist) "; x -> " x "; y -> " y))
-                      (if (is-safe-move (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)) strlist)
-                        (find-path rows cols (mark-visited x y "!" maze) visited (+ x (map-move-to-num :x move)) (+ y (map-move-to-num :y move)))
-                        (mark-visited x y "!" maze))
-                      )
-                    strlist [:up :down :left :right]))
-  (println "\nReturned maze")
-  (pretty-print maze)
-  (println "Returned maze\n")
-  maze
-  )
-
-(def moves {:x {:left -1 :right 1} :y {:up -1 :down 1}})
-(def original-treasure-map (split-strings (read-file)))
-(def treasure-map (split-strings (read-file)))
-(def rows (count treasure-map))
-(def cols (count (first treasure-map)))
-
-(println rows)
-(println cols)
-(find-path rows cols treasure-map #{} 0 0)
-
-; (defn recursive-backtracker
-;   [current-x current-y grid]
-;   (reduce (fn [grid direction]
-;             (let [next-x (+ current-x (DX direction))
-;                   next-y (+ current-y (DY direction))]
-;               (if (valid-unvisited-cell? next-x next-y grid)
-;                 (recursive-backtracker next-x next-y
-;                                        (remove-walls current-x current-y next-x next-y
-;                                                      direction grid))
-;                 grid)))
-;           grid, (clojure.core/shuffle [:N :S :E :W])))
