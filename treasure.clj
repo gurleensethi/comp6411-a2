@@ -1,5 +1,5 @@
 (defn read-file []
-  (with-open [rdr (clojure.java.io/reader "map.txt")]
+  (with-open [rdr (clojure.java.io/reader "test.txt")]
     (reduce (fn [arg1 arg2]
               (conj arg1 arg2))
             [] (line-seq rdr))))
@@ -64,6 +64,34 @@
                                 (mark-visited x y "!" maze)))))))
                     strlist [:up :down :left :right]))
   maze)
+
+(defn find-path-alt
+  [row cols maze x y]
+  (if (= (get-xy x y (get maze :map)) "@")
+    (assoc maze :found true)
+    (let [maze (if (get maze :found)
+                 (mark-visited x y "+" maze)
+                 (if (is-safe-move (+ x 1) y (get maze :map))
+                   (find-path-alt row cols (mark-visited x y "!" maze) (+ x 1) y)
+                   (mark-visited x y "!" maze)))]
+      (let [maze (if (get maze :found)
+                   (mark-visited x y "+" maze)
+                   (if (is-safe-move (- x 1) y (get maze :map))
+                     (find-path-alt row cols (mark-visited x y "!" maze) (- x 1) y)
+                     (mark-visited x y "!" maze)))]
+        (let [maze (if (get maze :found)
+                     (mark-visited x y "+" maze)
+                     (if (is-safe-move x (+ y 1) (get maze :map))
+                       (find-path-alt row cols (mark-visited x y "!" maze) x (+ y 1))
+                       (mark-visited x y "!" maze)))]
+          (let [maze (if (get maze :found)
+                       (mark-visited x y "+" maze)
+                       (if (is-safe-move x (- y 1) (get maze :map))
+                         (find-path-alt row cols (mark-visited x y "!" maze) x (- y 1))
+                         (mark-visited x y "!" maze)))]
+            (if (get maze :found)
+              (mark-visited x y "+" maze)
+              (mark-visited x y "!" maze))))))))
 
 (def moves {:x {:left -1 :right 1} :y {:up -1 :down 1}})
 (def original-treasure-map (split-strings (read-file)))
